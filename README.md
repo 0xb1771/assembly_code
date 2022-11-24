@@ -29,6 +29,15 @@ All other registers are caller-saved.
 
 ## Linux syscall
 
-In assembly syscalls get arguments in following registers.
 The arguments for system calls are stored in a different set of registers than
 those for functions. The fourth argument is stored in r10, while a function accepts the fourth argument in rcx.
+
+To get insight about a syscall you can use man:
+
+```
+man -s 2 read
+```
+
+## Implementation of the same functions
+
+[lib.inc](https://github.com/Apress/low-level-programming/blob/master/assignments/1_io_library/teacher/lib.inc)

@@ -1,4 +1,4 @@
-global exit, string_length, print_string, print_char, print_newline, print_uint, print_int
+global exit, string_length, print_string, print_char, print_newline, print_uint, print_int, read_char
 
 section	.text
 
@@ -115,7 +115,81 @@ print_int:
   pop rbp
   ret
 
+; reads one char from stdin and returns it. Returns 0 if the end of input stream occurs.
+read_char:
+  push rbp
+  mov rbp, rsp
+  sub rsp, 0x4
+  mov rdi, 0                  ; stdin as first argument
+  lea rsi, [rbp-0x4]          ; a pointer to a 4 byte buffer in the stack
+  mov rdx, 1                  ; read 1 byte
+  call read_syscall
+  cmp rax, 0
+  jle read_char_error
+  movzx rax, byte [rbp-0x4]   ; mov the char into rax
+  jmp read_char_exit
+  read_char_error:
+  mov rax, 0
+  read_char_exit:
+  add rsp, 0x4
+  mov rsp, rbp
+  pop rbp
+  ret
+
+; accepts a buffer address and size as arguments. Reads next word from stdin
+; (until whitespaces occurs). Stops and returns 0 if word is too big for the
+; buffer specified; otherwise returns the buffer address.
+;
+; - rdi buffer address to store string
+; - rsi size of the word to read
+;
+; notes: whitespaces are: space, tabulation, line break 0x20,0x9,0x10
+read_word:
+  push rbp
+  mov rbp, rsp
+  sub rsp, 0x18                     ; allocate 24 bytes to store the two arguments and char reads counter (qword)
+  mov [rbp-0x10], rdi               ; buffer address
+  mov [rbp-0x8], rsi                ; buffer size
+  mov qword [rbp-0x18], 0           ; number of character read counter
+  read_char_loop:
+  call read_char
+  cmp rax, 0x20
+  je read_word_string_end
+  cmp rax, 0x9
+  je read_word_string_end
+  cmp rax, 0x10
+  je read_word_string_end
+  mov rsi, [rbp-0x8]
+  cmp [rbp-0x18], rsi                ; check if bytes read can be stored in the buffer
+  jge read_word_buffer_overflow 
+
+  cmp []
+  push rax
+  inc qword [rbp-0x18]
+  read_word_string_end:
+
+  read_word_buffer_overflow:
+  mov rax, 0
+  read_word_exit:
+  mov 
+
+
+
+
+
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
 ; private functions
+;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 
 print_minus:
   mov rdi, 0x2d                                         ; - char ascii code
@@ -128,5 +202,10 @@ exit_sycall:
 
 write_syscall:
   mov rax, 1
+  syscall
+  ret
+
+read_syscall:
+  mov rax, 0
   syscall
   ret
